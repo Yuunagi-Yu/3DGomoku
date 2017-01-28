@@ -20,10 +20,10 @@ namespace Enums{
 			phase++;
 			stage [v, h]++;
 
-			if (initiative) {
-				Instantiate (blackBall, new Vector3 (h * 5, 15, v * 5), Quaternion.identity);
-			} else if(!initiative){
-				Instantiate (whiteBall, new Vector3 (h * 5, 15, v * 5), Quaternion.identity);
+			if (phase % 2 == 1) {
+				Instantiate (blackBall, new Vector3 (h * 5, 15, v * -5), Quaternion.identity);
+			} else if(phase % 2 == 0){
+				Instantiate (whiteBall, new Vector3 (h * 5, 15, v * -5), Quaternion.identity);
 			}
 		}
 	}
