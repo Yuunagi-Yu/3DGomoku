@@ -22,9 +22,9 @@ public class ChangeColor : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
 	public void OnClick(){
 		if (Head.phase % 2 == 1 && initiative) {
-			//return;
+			return;
 		} else if (Head.phase % 2 == 0 && !initiative) {
-			//return;
+			return;
 		}
 		limit = Head.stage [vertical, horizontal];
 		if (limit < 5) {
