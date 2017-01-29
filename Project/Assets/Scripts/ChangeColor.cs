@@ -26,8 +26,8 @@ public class ChangeColor : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 		} else if (Head.phase % 2 == 0 && !initiative) {
 			//return;
 		}
-		if (limit < 4) {
-			limit = Head.stage [vertical, horizontal];
+		limit = Head.stage [vertical, horizontal];
+		if (limit < 5) {
 			Head.SetStone (vertical, horizontal);
 		}
 	}

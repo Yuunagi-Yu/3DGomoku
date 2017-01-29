@@ -6,6 +6,7 @@ namespace Enums{
 	public class Head : MonoBehaviour {
 		public static int VERTICAL = -1, HORIZONTAL = -1, phase = 0;
 		public static int[,] stage = new int[5,5];
+		public static int[] stonePos = new int[3];
 		public static bool initiative = true;
 
 		private static GameObject blackBall, whiteBall;
@@ -17,6 +18,9 @@ namespace Enums{
 				whiteBall = Resources.Load ("WhiteBall") as GameObject;
 			}
 
+			stonePos [0] = stage [v, h];
+			stonePos [1] = v;
+			stonePos [2] = h;
 			phase++;
 			stage [v, h]++;
 
