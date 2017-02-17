@@ -6,15 +6,16 @@ using Enums;
 public class EnemyAI1 : MonoBehaviour {
 	public int searchDepth;
 
-	private int[,,] field = new int[5,5,5];
-	private int height = 0;
+	private int[,,] field = new int[5, 5, 5];
+	private int[,] winPos = new int[5, 3];
+	private int height = 0, canSet = 0;
 	private bool initiative = false, attack = true;
 
 	// Use this for initialization
 	void Start () {
-		initiative = Head.initiative;
+		initiative = !Head.initiative;
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
 		if (Head.phase % 2 == 0 && initiative && attack) {
@@ -103,8 +104,14 @@ public class EnemyAI1 : MonoBehaviour {
 
 			//ルートノードの時、石を打つ
 			field [Head.stage [bestX, bestY], bestX, bestY] = -1;
+			Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
+				+ " 石:" + field [Head.stage [bestX, bestY], bestX, bestY]);
 			Head.SetStone (bestX, bestY);
-			Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2]);
+			if (eval () == 500000) {
+				Debug.Log ("YOU LOSE");
+				return 0;
+			}
+			canSet += (Head.stage [bestX, bestY] == 4) ? 1 : 0;
 			attack = true;
 
 			return 0;
@@ -121,7 +128,7 @@ public class EnemyAI1 : MonoBehaviour {
 		float value = 0;
 
 		for (int z = 0; z <= height; z++) {
-			
+
 			int overlap3 = 0, overlap4 = 0;
 			int count3 = 0, count4 = 0;
 			int down3 = 0, down4 = 0;
@@ -189,17 +196,16 @@ public class EnemyAI1 : MonoBehaviour {
 					count4 += overlap4;
 				}
 
-				if (exit3 && exit4) {
-					break;
-				}
-
 				//どちらかが勝利した時、ループを抜ける
 				if (count1 == 5 || count2 == 5) {
-					//value += -500000;
 					return -500000;
 				} else if (count1 == -5 || count2 == -5) {
-					//value += 500000;
 					return 500000;
+				}
+
+
+				if (exit3 && exit4) {
+					break;
 				}
 
 				//評価値の追加
@@ -208,10 +214,8 @@ public class EnemyAI1 : MonoBehaviour {
 
 			//どちらかが勝利した時、ループを抜ける
 			if (count3 == 5 || count4 == 5) {
-				//value += -500000;
 				return -500000;
 			} else if (count3 == -5 || count4 == -5) {
-				//value += 500000;
 				return 500000;
 			}
 
@@ -220,7 +224,7 @@ public class EnemyAI1 : MonoBehaviour {
 
 		for (int x = 0; x < 5; x++) {
 			for (int y = 0; y < 5; y++) {
-				
+
 				int count = 0, overlap = 0;
 				bool exit = false;
 
@@ -241,10 +245,8 @@ public class EnemyAI1 : MonoBehaviour {
 				}
 
 				if (count == 5) {
-					//value += -500000;
 					return -500000;
 				} else if (count == -5) {
-					//value += 500000;
 					return 500000;
 				}
 
@@ -253,7 +255,7 @@ public class EnemyAI1 : MonoBehaviour {
 		}
 
 		for (int x = 0; x < 5; x++) {
-			
+
 			int count1 = 0, count2 = 0, count3 = 0, count4 = 0;
 			int overlap1 = 0, overlap2 = 0, overlap3 = 0, overlap4 = 0;
 			int down1 = 0, down2 = 0, down3 = 0, down4 = 0;
@@ -311,10 +313,8 @@ public class EnemyAI1 : MonoBehaviour {
 			}
 
 			if (count1 == 5 || count2 == 5 || count3 == 5 || count4 == 5) {
-				//value += -500000;
 				return -500000;
 			} else if (count1 == -5 || count2 == -5 || count3 == -5 || count4 == -5) {
-				//value += 500000;
 				return 500000;
 			}
 
@@ -376,10 +376,8 @@ public class EnemyAI1 : MonoBehaviour {
 		}
 
 		if (_count1 == 5 || _count2 == 5 || _count3 == 5 || _count4 == 5) {
-			//value += -500000;
 			return -500000;
 		} else if (_count1 == -5 || _count2 == -5 || _count3 == -5 || _count4 == -5) {
-			//value += 500000;
 			return 500000;
 		}
 
@@ -413,10 +411,10 @@ public class EnemyAI1 : MonoBehaviour {
 			value = 5;
 			break;
 		case 2:
-			value = 10;
+			value = 50;
 			break;
 		case 3:
-			value = 100;
+			value = 500;
 			break;
 		default:
 			value = 5;
@@ -428,13 +426,18 @@ public class EnemyAI1 : MonoBehaviour {
 
 	//プレイヤーが置いてから少しして石を置く
 	IEnumerator wait(){
+		int stoneHeight = Head.stonePos [0];
 		attack = false;
-		if (height < Head.stonePos [0]) {
-			height = Head.stonePos [0];
-		}
+		height = (height < stoneHeight) ? stoneHeight : height;
+		canSet += (stoneHeight == 4) ? 1 : 0;
+		searchDepth = (canSet >= 10) ? 5 : 4;
 		if (Head.phase > 0) {
-			field [Head.stonePos [0], Head.stonePos [1], Head.stonePos [2]] = 1;
-			//Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2]);
+			field [stoneHeight, Head.stonePos [1], Head.stonePos [2]] = 1;
+			Debug.Log ("点数:" + eval () + " 高さ:" + stoneHeight + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
+				+ " 石:" + field [stoneHeight, Head.stonePos [1], Head.stonePos [2]]);
+			if (eval () == -500000) {
+				Debug.Log ("YOU WIN");
+			}
 		}
 		yield return new WaitForSeconds (2.0f);
 		float a = Search (true, searchDepth, Mathf.NegativeInfinity, Mathf.Infinity);

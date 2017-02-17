@@ -9,6 +9,7 @@ public class EnemyAI : MonoBehaviour {
 	private int[,,] field = new int[5, 5, 5];
 	private int[,] winPos = new int[5, 3];
 	private int height = 0, canSet = 0;
+	private float value = 0;
 	private bool initiative = false, attack = true;
 
 	// Use this for initialization
@@ -104,9 +105,9 @@ public class EnemyAI : MonoBehaviour {
 
 			//ルートノードの時、石を打つ
 			field [Head.stage [bestX, bestY], bestX, bestY] = -1;
-			/*Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
-				+ " 石:" + field [Head.stage [bestX, bestY], bestX, bestY]);*/
 			Head.SetStone (bestX, bestY);
+			Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
+				+ " 石:" + field [Head.stage [bestX, bestY], bestX, bestY]);
 			if (eval () == 500000) {
 				Debug.Log ("YOU LOSE");
 				return 0;
@@ -125,265 +126,154 @@ public class EnemyAI : MonoBehaviour {
 
 	//count : 白と黒の石を数える    overlap : 白と黒が重複しているかどうか    exit : ループを抜けるか    down : 下に石があるか
 	float eval(){
-		float value = 0;
+		value = 0;
 
-		for (int z = 0; z <= height; z++) {
-			
-			int overlap3 = 0, overlap4 = 0;
-			int count3 = 0, count4 = 0;
-			int down3 = 0, down4 = 0;
-			bool exit3 = false, exit4 = false;
+		int setPos = 0;
 
+		//[Todo]高さによるループの回数制限かける
+		for (int i = 0; i < 3; i++) {
 			for (int x = 0; x < 5; x++) {
-
-				int overlap1 = 0, overlap2 = 0;
-				int count1 = 0, count2 = 0;
-				int down1 = 0, down2 = 0;
-				bool exit1 = false, exit2 = false;
-
-				//1段ごとの横1列と縦1列の検証
 				for (int y = 0; y < 5; y++) {
 
-					//横1列の検証
-					if (check (field [z, y, x], overlap1, exit1) >= 100) {
-						count1 = 0;
-						exit1 = true;
-					} else {
-						overlap1 = check (field [z, y, x], overlap1, exit1);
-						if (z > 0 && overlap1 == 0 && field [z - 1, y, x] == 0) {
-							down1++;
+					if (i == 0 && x % 4 == 0 && y % 4 == 0) {
+						if (slant (x, y, i, true) > 0) {
+							return 500000;
+						} else if (slant (x, y, i, true) < 0) {
+							return -500000;
 						}
-						count1 += overlap1;
-					}
-
-					//奥行き1列の検証
-					if (check (field [z, x, y], overlap2, exit2) >= 100) {
-						count2 = 0;
-						exit2 = true;
-					} else {
-						overlap2 = check (field [z, x, y], overlap2, exit2);
-						if (z > 0 && overlap2 == 0 && field [z - 1, x, y] == 0) {
-							down2++;
+					} else if(x % 4 == 0){
+						if (slant (x, y, i, false) > 0) {
+							return 500000;
+						} else if (slant (x, y, i, false) < 0) {
+							return -500000;
 						}
-						count2 += overlap2;
+					}
+				
+					int count = 0, overlap = 0;
+					bool exit = false;
+
+					for (int z = 0; z < 5; z++) {
+						switch (i) {
+						case 0:
+							setPos = field [x, z, y];
+							break;
+						case 1:
+							setPos = field [y, x, z];
+							break;
+						case 2:
+							setPos = field [z, y, x];
+							break;
+						default:
+							break;
+						}
+
+						if (check (setPos, overlap, exit) >= 100) {
+							count = 0;
+							exit = true;
+						} else {
+							overlap = check (setPos, overlap, exit);
+							count += overlap;
+						}
+
+						if (exit) {
+							break;
+						}
 					}
 
-					//白と黒の被りがあった時、ループを抜ける
-					if (exit1 && exit2) {
-						break;
+					if (count == 5) {
+						return -500000;
+					} else if (count == -5) {
+						return 500000;
 					}
-				}
 
-				//斜めの検証
-				if (check (field [z, x, x], overlap3, exit3) >= 100) {
-					count3 = 0;
-					exit3 = true;
-				} else {
-					overlap3 = check (field [z, x, x], overlap3, exit3);
-					if (z > 0 && overlap3 == 0 && field [z - 1, x, x] == 0) {
-						down3++;
-					}
-					count3 += overlap3;
+					value += cal (count);
 				}
-				if (check (field [z, 4 - x, x], overlap4, exit4) >= 100) {
-					count4 = 0;
-					exit4 = true;
-				} else {
-					overlap4 = check (field [z, 4 - x, x], overlap4, exit4);
-					if (z > 0 && overlap4 == 0 && field [z - 1, 4 - x, x] == 0) {
-						down4++;
-					}
-					count4 += overlap4;
-				}
-
-				//どちらかが勝利した時、ループを抜ける
-				if (count1 == 5 || count2 == 5) {
-					return -500000;
-				} else if (count1 == -5 || count2 == -5) {
-					return 500000;
-				}
-
-
-				if (exit3 && exit4) {
-					break;
-				}
-
-				//評価値の追加
-				value += cal(count1) / 5 * (5 - down1) + cal(count2) / 5 * (5 - down2);
 			}
-
-			//どちらかが勝利した時、ループを抜ける
-			if (count3 == 5 || count4 == 5) {
-				return -500000;
-			} else if (count3 == -5 || count4 == -5) {
-				return 500000;
-			}
-
-			value += cal (count3) / 5 * (5 - down3) + cal (count4) / 5 * (5 - down4);
 		}
 
-		for (int x = 0; x < 5; x++) {
-			for (int y = 0; y < 5; y++) {
-				
-				int count = 0, overlap = 0;
-				bool exit = false;
+		return value;
+	}
 
-				for (int z = 0; z <= height; z++) {
+	int slant(int x, int y, int judge, bool diagonal){
+		int count = 0, overlap = 0;
+		bool exit = false;
 
-					//縦1列の検証
-					if (check (field [z, y, x], overlap, exit) >= 100) {
+		if (diagonal) {
+			if (x % 4 == 0 && y % 4 == 0) {
+				int n = (x == 0) ? 1 : -1;
+				int m = (y == 0) ? 1 : -1;
+
+				for (int i = 0; i < 5; i++) {
+					if (check (field [x, i, y], overlap, exit) >= 100) {
 						count = 0;
 						exit = true;
 					} else {
-						overlap = check (field [z, y, x], overlap, exit);
+						overlap = check (field [x, i, y], overlap, exit);
 						count += overlap;
 					}
 
 					if (exit) {
 						break;
 					}
+
+					x += n;
+					y += m;
 				}
 
 				if (count == 5) {
-					return -500000;
+					return -1;
 				} else if (count == -5) {
-					return 500000;
+					return 1;
+				}
+
+				value += cal (count);
+			}
+		} else {
+			if (x % 4 == 0) {
+				int n = (x == 0) ? 1 : -1;
+				int setPos = 0;
+
+				for (int i = 0; i < 5; i++) {
+					switch (judge) {
+					case 0:
+						setPos = field [x, i, y];
+						break;
+					case 1:
+						setPos = field [y, x, i];
+						break;
+					case 2:
+						setPos = field [i, y, x];
+						break;
+					default:
+						break;
+					}
+
+					if (check (setPos, overlap, exit) >= 100) {
+						count = 0;
+						exit = true;
+					} else {
+						overlap = check (setPos, overlap, exit);
+						count += overlap;
+					}
+
+					if (exit) {
+						break;
+					}
+
+					x += n;
+				}
+
+				if (count == 5) {
+					return -1;
+				} else if (count == -5) {
+					return 1;
 				}
 
 				value += cal (count);
 			}
 		}
 
-		for (int x = 0; x < 5; x++) {
-			
-			int count1 = 0, count2 = 0, count3 = 0, count4 = 0;
-			int overlap1 = 0, overlap2 = 0, overlap3 = 0, overlap4 = 0;
-			int down1 = 0, down2 = 0, down3 = 0, down4 = 0;
-			bool exit1 = false, exit2 = false, exit3 = false, exit4 = false;
-
-			for (int z = 0; z <= height; z++) {
-
-				//縦横の斜め1列の検証
-				if (check (field [z, x, z], overlap1, exit1) >= 100) {
-					count1 = 0;
-					exit1 = true;
-				} else {
-					overlap1 = check (field [z, x, z], overlap1, exit1);
-					if (z > 0 && overlap1 == 0 && field [z - 1, x, z] == 0) {
-						down1++;
-					}
-					count1 += overlap1;
-				}
-				if (check (field [z, x, 4 - z], overlap2, exit2) >= 100) {
-					count2 = 0;
-					exit2 = true;
-				} else {
-					overlap2 = check (field [z, x, 4 - z], overlap2, exit2);
-					if (z > 0 && overlap2 == 0 && field [z - 1, x, 4 - z] == 0) {
-						down2++;
-					}
-					count2 += overlap2;
-				}
-
-				//縦奥行きの斜め1列の検証
-				if (check (field [z, z, x], overlap3, exit3) >= 100) {
-					count3 = 0;
-					exit3 = true;
-				} else {
-					overlap3 = check (field [z, z, x], overlap3, exit3);
-					if (z > 0 && overlap3 == 0 && field [z - 1, z, x] == 0) {
-						down3++;
-					}
-					count3 += overlap3;
-				}
-				if (check (field [z, 4 - z, x], overlap4, exit4) >= 100) {
-					count4 = 0;
-					exit4 = true;
-				} else {
-					overlap4 = check (field [z, 4 - z, x], overlap4, exit4);
-					if (z > 0 && overlap4 == 0 && field [z - 1, 4 - z, x] == 0) {
-						down4++;
-					}
-					count4 += overlap4;
-				}
-
-				if (exit1 && exit2 && exit3 && exit4) {
-					break;
-				}
-			}
-
-			if (count1 == 5 || count2 == 5 || count3 == 5 || count4 == 5) {
-				return -500000;
-			} else if (count1 == -5 || count2 == -5 || count3 == -5 || count4 == -5) {
-				return 500000;
-			}
-
-			value += cal (count1) / 5 * (5 - down1) + cal (count2) / 5 * (5 - down2) + cal (count3) / 5 * (5 - down3) + cal (count4) / 5 * (5 - down4);
-		}
-
-
-		//対角線の1列の検証
-		int _count1 = 0, _count2 = 0, _count3 = 0, _count4 = 0;
-		int _overlap1 = 0, _overlap2 = 0, _overlap3 = 0, _overlap4 = 0;
-		int _down1 = 0, _down2 = 0, _down3 = 0, _down4 = 0;
-		bool _exit1 = false, _exit2 = false, _exit3 = false, _exit4 = false;
-
-		for (int z = 0; z <= height; z++) {
-			if (check (field [z, z, z], _overlap1, _exit1) >= 100) {
-				_count1 = 0;
-				_exit1 = true;
-			} else {
-				_overlap1 = check (field [z, z, z], _overlap1, _exit1);
-				if (z > 0 && _overlap1 == 0 && field [z - 1, z, z] == 0) {
-					_down1++;
-				}
-				_count1 += _overlap1;
-			}
-			if (check (field [z, 4 - z, z], _overlap2, _exit2) >= 100) {
-				_count2 = 0;
-				_exit2 = true;
-			} else {
-				_overlap2 = check (field [z, 4 - z, z], _overlap2, _exit2);
-				if (z > 0 && _overlap2 == 0 && field [z - 1, 4 - z, z] == 0) {
-					_down2++;
-				}
-				_count2 += _overlap2;
-			}
-			if (check (field [z, z, 4 - z], _overlap3, _exit3) >= 100) {
-				_count3 = 0;
-				_exit3 = true;
-			} else {
-				_overlap3 = check (field [z, z, 4 - z], _overlap3, _exit3);
-				if (z > 0 && _overlap3 == 0 && field [z - 1, z, 4 - z] == 0) {
-					_down3++;
-				}
-				_count3 += _overlap3;
-			}
-			if (check (field [z, 4 - z, 4 - z], _overlap4, _exit4) >= 100) {
-				_count4 = 0;
-				_exit4 = true;
-			} else {
-				_overlap4 = check (field [z, 4 - z, 4 - z], _overlap4, _exit4);
-				if (z > 0 && _overlap4 == 0 && field [z - 1, 4 - z, 4 - z] == 0) {
-					_down4++;
-				}
-				_count4 += _overlap4;
-			}
-
-			if (_exit1 && _exit2 && _exit3 && _exit4) {
-				break;
-			}
-		}
-
-		if (_count1 == 5 || _count2 == 5 || _count3 == 5 || _count4 == 5) {
-			return -500000;
-		} else if (_count1 == -5 || _count2 == -5 || _count3 == -5 || _count4 == -5) {
-			return 500000;
-		}
-
-		value += cal (_count1) / 5 * (5 - _down1) + cal (_count2) / 5 * (5 - _down2) + cal (_count3) / 5 * (5 - _down3) + cal (_count4) / 5 * (5 - _down4);
-
-		return value;
+		return 0;
 	}
 
 	int check(int value, int overlap, bool exit){
@@ -433,8 +323,8 @@ public class EnemyAI : MonoBehaviour {
 		searchDepth = (canSet >= 10) ? 5 : 4;
 		if (Head.phase > 0) {
 			field [stoneHeight, Head.stonePos [1], Head.stonePos [2]] = 1;
-			/*Debug.Log ("点数:" + eval () + " 高さ:" + stoneHeight + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
-				+ " 石:" + field [stoneHeight, Head.stonePos [1], Head.stonePos [2]]);*/
+			Debug.Log ("点数:" + eval () + " 高さ:" + stoneHeight + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
+				+ " 石:" + field [stoneHeight, Head.stonePos [1], Head.stonePos [2]]);
 			if (eval () == -500000) {
 				Debug.Log ("YOU WIN");
 			}
