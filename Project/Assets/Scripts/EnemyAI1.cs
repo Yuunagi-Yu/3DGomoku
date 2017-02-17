@@ -3,17 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using Enums;
 
-public class EnemyAI : MonoBehaviour {
+public class EnemyAI1 : MonoBehaviour {
 	public int searchDepth;
 
-	private int[,,] field = new int[5, 5, 5];
-	private int[,] winPos = new int[5, 3];
-	private int height = 0, canSet = 0;
+	private int[,,] field = new int[5,5,5];
+	private int height = 0;
 	private bool initiative = false, attack = true;
 
 	// Use this for initialization
 	void Start () {
-		initiative = !Head.initiative;
+		initiative = Head.initiative;
 	}
 	
 	// Update is called once per frame
@@ -104,14 +103,8 @@ public class EnemyAI : MonoBehaviour {
 
 			//ルートノードの時、石を打つ
 			field [Head.stage [bestX, bestY], bestX, bestY] = -1;
-			/*Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
-				+ " 石:" + field [Head.stage [bestX, bestY], bestX, bestY]);*/
 			Head.SetStone (bestX, bestY);
-			if (eval () == 500000) {
-				Debug.Log ("YOU LOSE");
-				return 0;
-			}
-			canSet += (Head.stage [bestX, bestY] == 4) ? 1 : 0;
+			Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2]);
 			attack = true;
 
 			return 0;
@@ -196,16 +189,17 @@ public class EnemyAI : MonoBehaviour {
 					count4 += overlap4;
 				}
 
-				//どちらかが勝利した時、ループを抜ける
-				if (count1 == 5 || count2 == 5) {
-					return -500000;
-				} else if (count1 == -5 || count2 == -5) {
-					return 500000;
-				}
-
-
 				if (exit3 && exit4) {
 					break;
+				}
+
+				//どちらかが勝利した時、ループを抜ける
+				if (count1 == 5 || count2 == 5) {
+					//value += -500000;
+					return -500000;
+				} else if (count1 == -5 || count2 == -5) {
+					//value += 500000;
+					return 500000;
 				}
 
 				//評価値の追加
@@ -214,8 +208,10 @@ public class EnemyAI : MonoBehaviour {
 
 			//どちらかが勝利した時、ループを抜ける
 			if (count3 == 5 || count4 == 5) {
+				//value += -500000;
 				return -500000;
 			} else if (count3 == -5 || count4 == -5) {
+				//value += 500000;
 				return 500000;
 			}
 
@@ -245,8 +241,10 @@ public class EnemyAI : MonoBehaviour {
 				}
 
 				if (count == 5) {
+					//value += -500000;
 					return -500000;
 				} else if (count == -5) {
+					//value += 500000;
 					return 500000;
 				}
 
@@ -313,8 +311,10 @@ public class EnemyAI : MonoBehaviour {
 			}
 
 			if (count1 == 5 || count2 == 5 || count3 == 5 || count4 == 5) {
+				//value += -500000;
 				return -500000;
 			} else if (count1 == -5 || count2 == -5 || count3 == -5 || count4 == -5) {
+				//value += 500000;
 				return 500000;
 			}
 
@@ -376,8 +376,10 @@ public class EnemyAI : MonoBehaviour {
 		}
 
 		if (_count1 == 5 || _count2 == 5 || _count3 == 5 || _count4 == 5) {
+			//value += -500000;
 			return -500000;
 		} else if (_count1 == -5 || _count2 == -5 || _count3 == -5 || _count4 == -5) {
+			//value += 500000;
 			return 500000;
 		}
 
@@ -411,10 +413,10 @@ public class EnemyAI : MonoBehaviour {
 			value = 5;
 			break;
 		case 2:
-			value = 50;
+			value = 10;
 			break;
 		case 3:
-			value = 500;
+			value = 100;
 			break;
 		default:
 			value = 5;
@@ -426,18 +428,13 @@ public class EnemyAI : MonoBehaviour {
 
 	//プレイヤーが置いてから少しして石を置く
 	IEnumerator wait(){
-		int stoneHeight = Head.stonePos [0];
 		attack = false;
-		height = (height < stoneHeight) ? stoneHeight : height;
-		canSet += (stoneHeight == 4) ? 1 : 0;
-		searchDepth = (canSet >= 10) ? 5 : 4;
+		if (height < Head.stonePos [0]) {
+			height = Head.stonePos [0];
+		}
 		if (Head.phase > 0) {
-			field [stoneHeight, Head.stonePos [1], Head.stonePos [2]] = 1;
-			/*Debug.Log ("点数:" + eval () + " 高さ:" + stoneHeight + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
-				+ " 石:" + field [stoneHeight, Head.stonePos [1], Head.stonePos [2]]);*/
-			if (eval () == -500000) {
-				Debug.Log ("YOU WIN");
-			}
+			field [Head.stonePos [0], Head.stonePos [1], Head.stonePos [2]] = 1;
+			//Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2]);
 		}
 		yield return new WaitForSeconds (2.0f);
 		float a = Search (true, searchDepth, Mathf.NegativeInfinity, Mathf.Infinity);

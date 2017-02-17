@@ -7,7 +7,7 @@ namespace Enums{
 		public static int VERTICAL = -1, HORIZONTAL = -1, phase = 0;
 		public static int[,] stage = new int[5,5];
 		public static int[] stonePos = new int[3];
-		public static bool initiative = true;
+		public static bool initiative = false;
 
 		private static GameObject blackBall, whiteBall;
 
