@@ -35,6 +35,16 @@ public class Images : MonoBehaviour {
 			image.color = new Color (0.8f, 0.8f, 0.8f, 0.1647f);
 		}
 
+		if (Head.end) {
+			image.color = new Color (0.8f, 0.8f, 0.8f, 0.5f);
+			for (int i = 0; i < 5; i++) {
+				if (stack == Head.lastPos [i, 0] && vertical == Head.lastPos [i, 1] && horizontal == Head.lastPos [i, 2]) {
+					image.color = new Color (0.22745f, 1, 0.22745f, 0.6f);
+				}
+			}
+			GetComponent<Images> ().enabled = false;
+		}
+
 		if (!stone && Head.phase > 0) {
 			if (vertical == Head.stonePos [1] && horizontal == Head.stonePos [2] && stack == Head.stonePos [0]) {
 				if (Head.phase % 2 == 1) {

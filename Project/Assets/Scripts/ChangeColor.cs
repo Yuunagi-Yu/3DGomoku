@@ -17,7 +17,10 @@ public class ChangeColor : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 	
 	// Update is called once per frame
 	void Update () {
-		
+		if (Head.end) {
+			GetComponent<Button> ().enabled = false;
+			GetComponent<ChangeColor> ().enabled = false;
+		}
 	}
 
 	public void OnClick(){

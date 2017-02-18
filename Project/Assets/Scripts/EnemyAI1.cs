@@ -104,8 +104,8 @@ public class EnemyAI1 : MonoBehaviour {
 
 			//ルートノードの時、石を打つ
 			field [Head.stage [bestX, bestY], bestX, bestY] = -1;
-			Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
-				+ " 石:" + field [Head.stage [bestX, bestY], bestX, bestY]);
+			/*Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
+				+ " 石:" + field [Head.stage [bestX, bestY], bestX, bestY]);*/
 			Head.SetStone (bestX, bestY);
 			if (eval () == 500000) {
 				Debug.Log ("YOU LOSE");
@@ -433,8 +433,8 @@ public class EnemyAI1 : MonoBehaviour {
 		searchDepth = (canSet >= 10) ? 5 : 4;
 		if (Head.phase > 0) {
 			field [stoneHeight, Head.stonePos [1], Head.stonePos [2]] = 1;
-			Debug.Log ("点数:" + eval () + " 高さ:" + stoneHeight + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
-				+ " 石:" + field [stoneHeight, Head.stonePos [1], Head.stonePos [2]]);
+			/*Debug.Log ("点数:" + eval () + " 高さ:" + stoneHeight + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
+				+ " 石:" + field [stoneHeight, Head.stonePos [1], Head.stonePos [2]]);*/
 			if (eval () == -500000) {
 				Debug.Log ("YOU WIN");
 			}

@@ -37,7 +37,7 @@ public class EnemyAI : MonoBehaviour {
 		int bestX = 0, bestY = 0;
 
 		if (depth == 0) {
-			return eval ();
+			return eval (false);
 		}
 
 		//プレイヤーが打つときは自分のてくると仮定した上で、AIが打つときは自らの利益を最大にしたいので、
@@ -105,11 +105,17 @@ public class EnemyAI : MonoBehaviour {
 
 			//ルートノードの時、石を打つ
 			field [Head.stage [bestX, bestY], bestX, bestY] = -1;
+			height = (Head.stage [bestX, bestY] > height) ? Head.stage [bestX, bestY] : height;
 			Head.SetStone (bestX, bestY);
-			Debug.Log ("点数:" + eval () + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
-				+ " 石:" + field [Head.stage [bestX, bestY], bestX, bestY]);
-			if (eval () == 500000) {
+			Debug.Log ("点数:" + eval (false) + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
+				+ " 石:" + field [Head.stage [bestX, bestY] - 1, bestX, bestY]);
+			if (eval (true) == 500000) {
 				Debug.Log ("YOU LOSE");
+				for (int i = 0; i < 5; i++) {
+					Head.indicate (winPos [i, 0], winPos [i, 1], winPos [i, 2]);
+				}
+				Head.end = true;
+				this.gameObject.SetActive (false);
 				return 0;
 			}
 			canSet += (Head.stage [bestX, bestY] == 4) ? 1 : 0;
@@ -125,43 +131,76 @@ public class EnemyAI : MonoBehaviour {
 	}
 
 	//count : 白と黒の石を数える    overlap : 白と黒が重複しているかどうか    exit : ループを抜けるか    down : 下に石があるか
-	float eval(){
+	float eval(bool isResult){
 		value = 0;
 
 		int setPos = 0;
+		int x_limit = 5, y_limit = 5, z_limit = 5;
 
 		//[Todo]高さによるループの回数制限かける
 		for (int i = 0; i < 3; i++) {
-			for (int x = 0; x < 5; x++) {
-				for (int y = 0; y < 5; y++) {
+			switch (i) {
+			case 0:
+				x_limit = height + 1;
+				break;
+			case 1:
+				x_limit = 5;
+				y_limit = height + 1;
+				break;
+			case 2:
+				y_limit = 5;
+				z_limit = height + 1;
+				break;
+			default:
+				break;
+			}
 
-					if (i == 0 && x % 4 == 0 && y % 4 == 0) {
-						if (slant (x, y, i, true) > 0) {
-							return 500000;
-						} else if (slant (x, y, i, true) < 0) {
-							return -500000;
+			for (int x = 0; x < x_limit; x++) {
+				for (int y = 0; y < y_limit; y++) {
+
+					int v = 0;
+					if (i == 2) {
+						v = slant (x, y, i, true, isResult);
+						if (v != 0) {
+							return returnValue (v);
 						}
-					} else if(x % 4 == 0){
-						if (slant (x, y, i, false) > 0) {
-							return 500000;
-						} else if (slant (x, y, i, false) < 0) {
-							return -500000;
+						v = slant (x, y, 1, false, isResult);
+						if (v != 0) {
+							return returnValue (v);
+						}
+						v = slant (x, y, 2, false, isResult);
+						if (v != 0) {
+							return returnValue (v);
+						}
+					} else if (i == 1) {
+						v = slant (x, y, 0, false, isResult);
+						if (v != 0) {
+							return returnValue (v);
 						}
 					}
 				
 					int count = 0, overlap = 0;
 					bool exit = false;
 
-					for (int z = 0; z < 5; z++) {
+					for (int z = 0; z < z_limit; z++) {
 						switch (i) {
 						case 0:
 							setPos = field [x, z, y];
+							if (isResult) {
+								setWinPos (z, x, z, y);
+							}
 							break;
 						case 1:
 							setPos = field [y, x, z];
+							if (isResult) {
+								setWinPos (z, y, x, z);
+							}
 							break;
 						case 2:
 							setPos = field [z, y, x];
+							if (isResult) {
+								setWinPos (z, z, y, x);
+							}
 							break;
 						default:
 							break;
@@ -180,10 +219,8 @@ public class EnemyAI : MonoBehaviour {
 						}
 					}
 
-					if (count == 5) {
-						return -500000;
-					} else if (count == -5) {
-						return 500000;
+					if (returnValue (count) != 0) {
+						return returnValue (count);
 					}
 
 					value += cal (count);
@@ -194,7 +231,7 @@ public class EnemyAI : MonoBehaviour {
 		return value;
 	}
 
-	int slant(int x, int y, int judge, bool diagonal){
+	int slant(int x, int y, int judge, bool diagonal, bool isResult){
 		int count = 0, overlap = 0;
 		bool exit = false;
 
@@ -203,12 +240,15 @@ public class EnemyAI : MonoBehaviour {
 				int n = (x == 0) ? 1 : -1;
 				int m = (y == 0) ? 1 : -1;
 
-				for (int i = 0; i < 5; i++) {
-					if (check (field [x, i, y], overlap, exit) >= 100) {
+				for (int i = 0; i < height + 1; i++) {
+					if (isResult) {
+						setWinPos (i, i, y, x);
+					}
+					if (check (field [i, y, x], overlap, exit) >= 100) {
 						count = 0;
 						exit = true;
 					} else {
-						overlap = check (field [x, i, y], overlap, exit);
+						overlap = check (field [i, y, x], overlap, exit);
 						count += overlap;
 					}
 
@@ -221,28 +261,48 @@ public class EnemyAI : MonoBehaviour {
 				}
 
 				if (count == 5) {
-					return -1;
+					return 5;
 				} else if (count == -5) {
-					return 1;
+					return -5;
 				}
 
 				value += cal (count);
 			}
 		} else {
-			if (x % 4 == 0) {
-				int n = (x == 0) ? 1 : -1;
+			if (x % 4 == 0 || y % 4 == 0) {
+				int n = 0, m = 0;
+				if (judge < 2) {
+					if (x % 4 != 0) {
+						return 0;
+					}
+					n = (x == 0) ? 1 : -1;
+				} else {
+					if (y % 4 != 0) {
+						return 0;
+					}
+					m = (y == 0) ? 1 : -1;
+				}
 				int setPos = 0;
 
 				for (int i = 0; i < 5; i++) {
 					switch (judge) {
 					case 0:
-						setPos = field [x, i, y];
+						setPos = field [y, x, i];
+						if (isResult) {
+							setWinPos (i, y, x, i);
+						}
 						break;
 					case 1:
-						setPos = field [y, x, i];
+						setPos = field [i, x, y];
+						if (isResult) {
+							setWinPos (i, i, x, y);
+						}
 						break;
 					case 2:
-						setPos = field [i, y, x];
+						setPos = field [i, x, y];
+						if (isResult) {
+							setWinPos (i, i, x, y);
+						}
 						break;
 					default:
 						break;
@@ -261,12 +321,13 @@ public class EnemyAI : MonoBehaviour {
 					}
 
 					x += n;
+					y += m;
 				}
 
 				if (count == 5) {
-					return -1;
+					return 5;
 				} else if (count == -5) {
-					return 1;
+					return -5;
 				}
 
 				value += cal (count);
@@ -314,6 +375,21 @@ public class EnemyAI : MonoBehaviour {
 		return value;
 	}
 
+	void setWinPos(int n, int x, int y, int z){
+		winPos [n, 0] = x;
+		winPos [n, 1] = y;
+		winPos [n, 2] = z;
+	}
+
+	float returnValue(int n){
+		if (n == 5) {
+			return -500000;
+		} else if (n == -5) {
+			return 500000;
+		}
+		return 0;
+	}
+
 	//プレイヤーが置いてから少しして石を置く
 	IEnumerator wait(){
 		int stoneHeight = Head.stonePos [0];
@@ -323,10 +399,15 @@ public class EnemyAI : MonoBehaviour {
 		searchDepth = (canSet >= 10) ? 5 : 4;
 		if (Head.phase > 0) {
 			field [stoneHeight, Head.stonePos [1], Head.stonePos [2]] = 1;
-			Debug.Log ("点数:" + eval () + " 高さ:" + stoneHeight + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
+			Debug.Log ("点数:" + eval (false) + " 高さ:" + stoneHeight + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
 				+ " 石:" + field [stoneHeight, Head.stonePos [1], Head.stonePos [2]]);
-			if (eval () == -500000) {
+			if (eval (true) == -500000) {
 				Debug.Log ("YOU WIN");
+				for (int i = 0; i < 5; i++) {
+					Head.indicate (winPos [i, 0], winPos [i, 1], winPos [i, 2]);
+				}
+				Head.end = true;
+				this.gameObject.SetActive (false);
 			}
 		}
 		yield return new WaitForSeconds (2.0f);

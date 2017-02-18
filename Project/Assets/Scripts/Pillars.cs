@@ -31,5 +31,9 @@ public class Pillars : MonoBehaviour {
 		} else {
 			child.SetActive (false);
 		}
+
+		if (Head.end) {
+			child.SetActive (false);
+		}
 	}
 }
