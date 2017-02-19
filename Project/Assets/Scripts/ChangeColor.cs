@@ -18,8 +18,11 @@ public class ChangeColor : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 	// Update is called once per frame
 	void Update () {
 		if (Head.end) {
-			GetComponent<Button> ().enabled = false;
-			GetComponent<ChangeColor> ().enabled = false;
+			Button button = GetComponent<Button> ();
+			if (button != null) {
+				button.enabled = false;
+			}
+			this.gameObject.GetComponent<ChangeColor> ().enabled = false;
 		}
 	}
 

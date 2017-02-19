@@ -4,8 +4,9 @@ using UnityEngine;
 using Enums;
 
 public class EnemyAI : MonoBehaviour {
-	public int searchDepth;
+	public GameObject winText, loseText, buttons;
 
+	private int searchDepth = 0;
 	private int[,,] field = new int[5, 5, 5];
 	private int[,] winPos = new int[5, 3];
 	private int height = 0, canSet = 0;
@@ -14,7 +15,11 @@ public class EnemyAI : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+		searchDepth = Head.depth;
 		initiative = !Head.initiative;
+		winText.SetActive (false);
+		loseText.SetActive (false);
+		buttons.SetActive (false);
 	}
 	
 	// Update is called once per frame
@@ -26,7 +31,7 @@ public class EnemyAI : MonoBehaviour {
 		}
 	}
 
-	float Search(bool isAI, int depth, float alpha, float beta){
+	float Search(bool test, bool isAI, int depth, float alpha, float beta){
 
 		//ノードの評価値
 		float value;
@@ -59,7 +64,7 @@ public class EnemyAI : MonoBehaviour {
 					Head.stage [x, y] += 1;
 
 					//再帰する
-					childValue = Search (!isAI, depth - 1, alpha, beta);
+					childValue = Search (false, !isAI, depth - 1, alpha, beta);
 
 					//
 					if (isAI) {
@@ -101,25 +106,20 @@ public class EnemyAI : MonoBehaviour {
 			}
 		}
 
+		if (depth == 1 && test) {
+			if (value == 500000) {
+				Debug.Log ("オケーイ");
+				finish (-1, bestX, bestY);
+				return 0;
+			} else {
+				return 100;
+			}
+			return 100;
+		}
+
 		if (depth == searchDepth) {
 
-			//ルートノードの時、石を打つ
-			field [Head.stage [bestX, bestY], bestX, bestY] = -1;
-			height = (Head.stage [bestX, bestY] > height) ? Head.stage [bestX, bestY] : height;
-			Head.SetStone (bestX, bestY);
-			Debug.Log ("点数:" + eval (false) + " 高さ:" + Head.stonePos[0] + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
-				+ " 石:" + field [Head.stage [bestX, bestY] - 1, bestX, bestY]);
-			if (eval (true) == 500000) {
-				Debug.Log ("YOU LOSE");
-				for (int i = 0; i < 5; i++) {
-					Head.indicate (winPos [i, 0], winPos [i, 1], winPos [i, 2]);
-				}
-				Head.end = true;
-				this.gameObject.SetActive (false);
-				return 0;
-			}
-			canSet += (Head.stage [bestX, bestY] == 4) ? 1 : 0;
-			attack = true;
+			finish (-1, bestX, bestY);
 
 			return 0;
 
@@ -392,25 +392,41 @@ public class EnemyAI : MonoBehaviour {
 
 	//プレイヤーが置いてから少しして石を置く
 	IEnumerator wait(){
+		finish (1, 0, 0);
+		yield return new WaitForSeconds (2.0f);
+		float a = Search (true, true, 1, Mathf.NegativeInfinity, Mathf.Infinity);
+		if (a != 0) {
+			a = Search (false, true, searchDepth, Mathf.NegativeInfinity, Mathf.Infinity);
+		}
+	}
+
+	void finish(int isPlayer, int x, int y){
+		if (isPlayer < 0) {
+			Head.SetStone (x, y);
+		}
 		int stoneHeight = Head.stonePos [0];
-		attack = false;
 		height = (height < stoneHeight) ? stoneHeight : height;
 		canSet += (stoneHeight == 4) ? 1 : 0;
-		searchDepth = (canSet >= 10) ? 5 : 4;
+		if (canSet >= 11) {
+			searchDepth += 1;
+			canSet -= 5;
+		}
 		if (Head.phase > 0) {
-			field [stoneHeight, Head.stonePos [1], Head.stonePos [2]] = 1;
-			Debug.Log ("点数:" + eval (false) + " 高さ:" + stoneHeight + " 奥行き:" + Head.stonePos[1] + " 横:" + Head.stonePos[2] 
-				+ " 石:" + field [stoneHeight, Head.stonePos [1], Head.stonePos [2]]);
-			if (eval (true) == -500000) {
-				Debug.Log ("YOU WIN");
+			field [stoneHeight, Head.stonePos [1], Head.stonePos [2]] = isPlayer;
+			if (eval (true) == -500000 * isPlayer) {
 				for (int i = 0; i < 5; i++) {
 					Head.indicate (winPos [i, 0], winPos [i, 1], winPos [i, 2]);
 				}
 				Head.end = true;
+				if (isPlayer > 0) {
+					winText.SetActive (true);
+				} else {
+					loseText.SetActive (true);
+				}
+				buttons.SetActive (true);
 				this.gameObject.SetActive (false);
 			}
 		}
-		yield return new WaitForSeconds (2.0f);
-		float a = Search (true, searchDepth, Mathf.NegativeInfinity, Mathf.Infinity);
+		attack = (isPlayer > 0) ? false : true;
 	}
 }
