@@ -21,6 +21,7 @@ namespace Enums{
 				cube = Resources.Load ("Cube") as GameObject;
 				setCube = (GameObject)Instantiate (Resources.Load ("SetCube") as GameObject, Vector3.zero, Quaternion.identity);
 				setCube.SetActive (false);
+				n = 0;
 			}
 
 			stonePos [0] = stage [v, h];

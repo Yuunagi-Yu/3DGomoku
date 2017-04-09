@@ -114,7 +114,6 @@ public class EnemyAI : MonoBehaviour {
 			} else {
 				return 100;
 			}
-			return 100;
 		}
 
 		if (depth == searchDepth) {
