@@ -27,6 +27,9 @@ public class ChangeColor : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 	}
 
 	public void OnClick(){
+		if (Head.end) {
+			return;
+		}
 		if (Head.phase % 2 == 1 && initiative) {
 			return;
 		} else if (Head.phase % 2 == 0 && !initiative) {

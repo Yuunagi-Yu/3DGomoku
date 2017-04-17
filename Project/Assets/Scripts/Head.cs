@@ -37,6 +37,12 @@ namespace Enums{
 			}
 			setCube.transform.position = new Vector3 (stonePos [2] * 5, stonePos [0] * 4, stonePos [1] * -5);
 			setCube.SetActive (true);
+
+			if (end) {
+				setCube.SetActive (false);
+				VERTICAL = -1;
+				HORIZONTAL = -1;
+			}
 		}
 
 		public static void indicate(int z, int x, int y){

@@ -162,20 +162,20 @@ public class EnemyAI_Sub : MonoBehaviour {
 					if (i == 2) {
 						v = slant (x, y, i, true, isResult);
 						if (v != 0) {
-							return 100000 * v;
+							return 100000 * -v;
 						}
 						v = slant (x, y, 1, false, isResult);
 						if (v != 0) {
-							return 100000 * v;
+							return 100000 * -v;
 						}
 						v = slant (x, y, 2, false, isResult);
 						if (v != 0) {
-							return 100000 * v;
+							return 100000 * -v;
 						}
 					} else if (i == 1) {
 						v = slant (x, y, 0, false, isResult);
 						if (v != 0) {
-							return 100000 * v;
+							return 100000 * -v;
 						}
 					}
 
@@ -215,13 +215,13 @@ public class EnemyAI_Sub : MonoBehaviour {
 					if (black_count != 0 && white_count != 0) {
 						count = 0;
 					} else if (black_count == 0) {
-						count = white_count;
+						count = -white_count;
 					} else if (white_count == 0) {
-						count = -black_count;
+						count = black_count;
 					}
 
 					if (Mathf.Abs (count) >= 5) {
-						return 100000 * count;
+						return 100000 * -count;
 					} else {
 						value += Cal (count);
 					}
@@ -313,9 +313,9 @@ public class EnemyAI_Sub : MonoBehaviour {
 		if (black_count != 0 && white_count != 0) {
 			count = 0;
 		} else if (black_count == 0) {
-			count = white_count;
+			count = -white_count;
 		} else if (white_count == 0) {
-			count = -black_count;
+			count = black_count;
 		}
 
 		if (Mathf.Abs (count) >= 5) {
@@ -344,11 +344,13 @@ public class EnemyAI_Sub : MonoBehaviour {
 	//プレイヤーが置いてから少しして石を置く
 	IEnumerator wait(){
 		finish (1, 0, 0);
+		Debug.Log (eval (false));
 		yield return new WaitForSeconds (1.8f);
 		float a = Search (true, true, 1, Mathf.NegativeInfinity, Mathf.Infinity);
 		if (a != 0) {
 			a = Search (false, true, searchDepth, Mathf.NegativeInfinity, Mathf.Infinity);
 		}
+		Debug.Log (eval (false));
 	}
 
 	void finish(int isPlayer, int x, int y){

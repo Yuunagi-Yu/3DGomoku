@@ -392,11 +392,13 @@ public class EnemyAI : MonoBehaviour {
 	//プレイヤーが置いてから少しして石を置く
 	IEnumerator wait(){
 		finish (1, 0, 0);
+		Debug.Log (eval (false));
 		yield return new WaitForSeconds (2.0f);
 		float a = Search (true, true, 1, Mathf.NegativeInfinity, Mathf.Infinity);
 		if (a != 0) {
 			a = Search (false, true, searchDepth, Mathf.NegativeInfinity, Mathf.Infinity);
 		}
+		Debug.Log (eval (false));
 	}
 
 	void finish(int isPlayer, int x, int y){

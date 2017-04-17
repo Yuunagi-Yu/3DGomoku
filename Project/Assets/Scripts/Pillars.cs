@@ -19,6 +19,11 @@ public class Pillars : MonoBehaviour {
 		v = Enums.Head.VERTICAL;
 		h = Enums.Head.HORIZONTAL;
 
+		if (Head.end) {
+			child.SetActive (false);
+			return;
+		}
+
 		//Enumsの値と同値だと子オブジェクトをActiveに
 		if (v >= 0 && h >= 0) {
 			if (v == vertical && h == horizontal) {
@@ -29,10 +34,6 @@ public class Pillars : MonoBehaviour {
 				return;
 			}
 		} else {
-			child.SetActive (false);
-		}
-
-		if (Head.end) {
 			child.SetActive (false);
 		}
 	}
